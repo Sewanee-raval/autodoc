@@ -1,0 +1,21 @@
+#!/bin/bash
+date
+
+INPUTFILE="servers.txt"
+OUTPUTDIR="output"
+if [ -d "$OUTPUTDIR" ]; then
+   echo "'$OUTPUTDIR' found. please wait ..."
+else
+   echo "'$OUTPUTDIR' NOT found. Creating directory"
+   mkdir output
+fi
+while IFS=  read -r -u3 input || [[ -n "$input" ]]; do
+        echo "Copying script to remote host $input"
+        timeout 60 /usr/bin/time -f "%e %C" sshpass -pXXXXXXXX scp -o  UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no autodoc_masterv2.sh XXXXXX@$input:/tmp 2>>/tmp/time.ssh.txt
+
+        echo "running script on remote host $input"
+        timeout 60 sshpass -pXXXXXXX ssh -n -o StrictHostKeyChecking=no XXXXXX@$input "echo XXXXXXX | sudo -S  bash /tmp/autodoc_masterv2.sh" > $OUTPUTDIR/$input.html
+	echo "\n$input completed"
+
+done 3< "$INPUTFILE"
+date
