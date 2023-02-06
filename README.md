@@ -19,9 +19,7 @@ Status of the project
 The software currently support the follwing unix systems
 
 * Linux Support  : 100%
-* HP-UX Support  : 50%
-* Solaris Support: 0%
-* AIX Support    : 0%
+
 
 
 Advantages
