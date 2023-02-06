@@ -841,12 +841,6 @@ PostgresqlServer () {
 
 Firewall () {
   # TODO collect firewall rules in /etc/firewalld/*.xml
-  # TODO firewall rules from /etc/firewalld/zones/*.xml
-  # TODO firewall configs from /etc/firewalld/helpers
-  # TODO firewall configs from /etc/firewalld/icmptypes
-  # TODO firewall configs from /etc/firewalld/ipsets
-  # TODO firewall configs from /etc/firewalld/policies
-  # TODO firewall configs from /etc/firewalld/services
   echo "<h2 id='firewallfiles' style='text-decoration:underline;'>System Firewall Information</h2>"
   echo "<span class='firewallicon'><h3>Firewall Status</h3></span>"
   echo "<pre><small>"
