@@ -11,7 +11,7 @@ version="0.7"               # Sets version variable
 #   2 Feb 23 - v0.7	- Updated for Firewall Rules
 #
 # ##################################################
-# Version 0.6
+# Version 0.7
 # Raymond Val
 
 
