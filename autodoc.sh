@@ -2,13 +2,14 @@
 # ##################################################
 # autodoc.sh - Automated System Documentation
 #
-version="0.7"               # Sets version variable
+version="0.8"               # Sets version variable
 #
 #
 # HISTORY:
 #
 # * DATE - v0.6  - First Creation
-#   2 Feb 23 - v0.7	- Updated for Firewall Rules
+#   02 Feb 23 - v0.7	- Updated for Firewall Rules
+#   21 Feb 23 - v0.8 	- Updated for fail2ban
 #
 # ##################################################
 # Version 0.7
@@ -58,7 +59,7 @@ DetectLinuxRole () {
         echo "<h2 id='role' style='text-decoration:underline;'>Server Roles</h2>"
         echo "The following running application(s) have been detected on this server. This will define the Server Role(s)."
 
-        psoutput=$(ps -o comm  --ppid 2 -N |sort -u |egrep -vi COMMAND\|grep\|ps\|sort\|hald\|nrpe\|ntpd\|dbus\|pickup\|qmgr\|bash\|avahi\|dnsmasq\|lsmd\|sshd\|sftp-server\|polkitd\|uuidd\|sh\|tail\|cat\|postdrop\|sftp-server\|cleanup\|bounce\|nagios\|crond\|gnome\|gconf\|metacity\|gvfsd\|bonobo\|gdm\|portmap\|pulseaudio\|rtkit-daemon\|at-spi-registry\|perl\|python\|xfs\|postmaster\|rpcbind\|ypbind)
+        psoutput=$(ps -o comm  --ppid 2 -N |sort -u |egrep -vi COMMAND\|grep\|ps\|sort\|hald\|nrpe\|ntpd\|dbus\|pickup\|qmgr\|bash\|avahi\|dnsmasq\|lsmd\|sshd\|sftp-server\|polkitd\|uuidd\|sh\|tail\|cat\|postdrop\|sftp-server\|cleanup\|bounce\|nagios\|crond\|gnome\|gconf\|metacity\|gvfsd\|bonobo\|gdm\|portmap\|pulseaudio\|rtkit-daemon\|at-spi-registry\|perl\|xfs\|postmaster\|rpcbind\|ypbind)
 
         echo "</pre>"		
 
@@ -97,6 +98,7 @@ DetectLinuxRole () {
 				haproxy=$(echo "$psoutput" |egrep -i haproxy | wc -l)
 				vrrp=$(echo "$psoutput" |egrep -i keepalived | wc -l)
 				firewall=$(echo "$psoutput" |egrep -i firewalld | wc -l)
+				fail2ban=$(echo "$psoutput" |egrep -i fail2ban | wc -l)
 			
 
                 if (( $apache > 0 )); then
@@ -178,6 +180,16 @@ DetectLinuxRole () {
                 if (( $vrrp > 0 )); then
 			      echo "<span class='vrrpicon'>Keepalive (VRRP) Server</span>"
                 fi
+
+                if (( $firewalld > 0 )); then
+			      echo "<span class='firewallicon'>Firewalld is Active</span>"
+                fi
+
+                if (( $fail2ban > 0 )); then
+			      echo "<span class='fail2banicon'>Fail2ban is Active</span>"
+                fi
+
+
         else
                 echo "No known services has been detected in this server.";
         fi
