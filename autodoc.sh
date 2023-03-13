@@ -11,6 +11,7 @@
 #   21 Feb 23 - v0.8 	- Updated for fail2ban
 #	08 Mar 23 - v0.9	- Added Sewanee Logo to Cover Page
 #	09 Mar 23 - v0.10	- Updated the PS statement on line 68 to allow for python startup of programs
+#   13 Mar 13 - v0.11   - Added section for gathering crontabs
 #	
 # ##################################################
 version="0.10" 
@@ -1354,7 +1355,23 @@ ServicesAutoStart () {
 		echo '<hr style="height:2px;border-width:0;color:gray;background-color:gray">'		
 }
 
-
+ListCrontabs () {
+	echo "<h2 id='listcrontabs' style='text-decoration:underline;'>All Available Crontabs</h2>"
+		echo "<pre><small>"
+		for f in $(find /var/spool/cron -maxdepth 2 -type f)
+		do
+			echo "<h4>Contents of  ${f} ...</h4>"
+			echo "<pre>"
+			echo "<xmp>"
+			# take action on each file. $f store current file name
+			cat $f
+			echo "</xmp>"
+			echo "</pre>"
+			echo '<hr style="height:2px;border-width:0;color:gray;background-color:gray;width:25%;text-align:left;margin-left:0">'
+		done
+		echo "</small></pre>"
+		echo '<hr style="height:2px;border-width:0;color:gray;background-color:gray;width:25%;text-align:left;margin-left:0">'
+}
 
 ListAllFiles () {
         echo "<h2 id='listfiles' style='text-decoration:underline;'>All Installed Software</h2>"
@@ -1444,6 +1461,7 @@ case "$unamestr" in
 				 BannerFile
 				 ServerFiles
                  ServicesAutoStart
+				 ListCrontabs
 				 ListAllFiles
 				 FooterPage
 
