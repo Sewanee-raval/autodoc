@@ -12,6 +12,8 @@
 #	08 Mar 23 - v0.9	- Added Sewanee Logo to Cover Page
 #	09 Mar 23 - v0.10	- Updated the PS statement on line 68 to allow for python startup of programs
 #   13 Mar 13 - v0.11   - Added section for gathering crontabs
+#
+#	TODO: Add /etc/fstab to list of files that are collected
 #	
 # ##################################################
 version="0.10" 
