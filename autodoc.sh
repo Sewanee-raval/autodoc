@@ -11,12 +11,13 @@
 #   21 Feb 23 - v0.8 	- Updated for fail2ban
 #	08 Mar 23 - v0.9	- Added Sewanee Logo to Cover Page
 #	09 Mar 23 - v0.10	- Updated the PS statement on line 68 to allow for python startup of programs
-#   13 Mar 13 - v0.11   - Added section for gathering crontabs
+#   13 Mar 23 - v0.11   - Added section for gathering crontabs
+#	14 Apr 23 - v0.12	- Added section to collect /etc/fstab
 #
-#	TODO: Add /etc/fstab to list of files that are collected
+#	TODO:
 #	
 # ##################################################
-version="0.10" 
+version="0.11" 
 
 
 if [ "$(id -u)" -ne 0 ]; then
@@ -472,6 +473,18 @@ HostFile () {
         echo "<div class='page-break' style='page-break-before: always;'></div>"
 }
 
+FstabFile () {
+        echo "<h2 id='fstabfile' style='text-decoration:underline;'>/etc/fstab File</h2>"
+        echo "<h3>Contents of /etc/fstab file</h3>"
+		echo "<pre><small>"
+		echo "<xmp>"
+        cat /etc/fstab  |grep -v ^$		
+		echo "</xmp>"
+		echo "</small></pre>"
+		echo '<hr style="height:2px;border-width:0;color:gray;background-color:gray;width:25%;text-align:left;margin-left:0">'
+        echo "<div class='page-break' style='page-break-before: always;'></div>"
+}
+
 DNSConf () {
 
         echo "<h2 id='ntp' style='text-decoration:underline;'>Network Time Protocol Config</h2>"
@@ -854,7 +867,6 @@ PostgresqlServer () {
 }
 
 Firewall () {
-  # TODO collect firewall rules in /etc/firewalld/*.xml
   echo "<h2 id='firewallfiles' style='text-decoration:underline;'>System Firewall Information</h2>"
   echo "<span class='firewallicon'><h3>Firewall Status</h3></span>"
   echo "<pre><small>"
@@ -1459,6 +1471,7 @@ case "$unamestr" in
                  GroupFile
                  UserFile
                  HostFile
+				 FstabFile
                  DNSConf
 				 BannerFile
 				 ServerFiles
