@@ -16,6 +16,7 @@
 #	19 May 23 - v0.13	- Added section to collect nginx information
 #
 #	TODO: Make the script more modular and add more sections
+#	TODO: Add Networking Scripts
 #	
 # ##################################################
 version="0.13" 
