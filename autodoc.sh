@@ -13,11 +13,12 @@
 #	09 Mar 23 - v0.10	- Updated the PS statement on line 68 to allow for python startup of programs
 #   13 Mar 23 - v0.11   - Added section for gathering crontabs
 #	14 Apr 23 - v0.12	- Added section to collect /etc/fstab
+#	19 May 23 - v0.13	- Added section to collect nginx information
 #
-#	TODO:
+#	TODO: Make the script more modular and add more sections
 #	
 # ##################################################
-version="0.11" 
+version="0.13" 
 
 
 if [ "$(id -u)" -ne 0 ]; then
@@ -252,10 +253,10 @@ InfoIpsLinux () {
 InfoSystemLinux () {
         echo "<h2 id='hardwareinfo' style='text-decoration:underline;'>Hardware Information</h2>"
         echo "<pre>"
-    if hash dmidecode 2>/dev/null; then
-dmidecode -t system |grep Manufacturer
-dmidecode -t system |grep Product
-dmidecode -t system |grep -i  "Serial Number"
+   		if hash dmidecode 2>/dev/null; then
+			dmidecode -t system |grep Manufacturer
+			dmidecode -t system |grep Product
+			dmidecode -t system |grep -i  "Serial Number"
         fi
         echo -n "        Number of CPU : "; cat /proc/cpuinfo |grep processor |wc -l
         echo -n "        CPU Model     : "; cat /proc/cpuinfo |grep "model name" |sort -u |awk -F":" '{print $2}'
@@ -1020,6 +1021,36 @@ Firewall () {
 	fi
 }
 
+NginxServer () {
+		echo "<h3>Nginx Server</h3>"
+		echo "<pre><small>"
+		echo "<xmp>"
+		cat /etc/nginx/nginx.conf
+		echo "</xmp>"
+		echo "</small></pre>"
+		echo '<hr style="height:2px;border-width:0;color:gray;background-color:gray;width:25%;text-align:left;margin-left:0">'
+
+		if [ -d "/etc/nginx/conf.d" ]; then
+			echo "<h3>/etc/nginx/conf.d directory</h3>"
+			echo "<pre><small>"
+			echo "<xmp>"
+			for f in $(find /etc/nginx/conf.d -maxdepth 2 -type f)
+			do
+				echo "<h4>Contents of  ${f} ...</h4>"
+				echo "<pre>"
+				echo "<xmp>"
+				# take action on each file. $f store current file name
+				cat $f |grep -v "^# " |grep -v ^$ |grep -v "^#$"
+				echo "</xmp>"
+				echo "</pre>"
+				echo '<hr style="height:2px;border-width:0;color:gray;background-color:gray;width:25%;text-align:left;margin-left:0">'
+			done
+			echo "</xmp>"
+			echo "</small></pre>"
+			echo '<hr style="height:2px;border-width:0;color:gray;background-color:gray;width:25%;text-align:left;margin-left:0">'
+		fi
+}
+
 ServerFiles () {
 		if (( $apache > 0 )); then
 			ApacheServer
@@ -1027,6 +1058,7 @@ ServerFiles () {
 
 		if (( $nginx > 0 )); then
 				echo "<span class='nginxicon'>Nginx WebServer</span>"
+			NginxServer
 		fi
 
 		if (( $oracle > 0 )); then
