@@ -14,12 +14,13 @@
 #   13 Mar 23 - v0.11   - Added section for gathering crontabs
 #	14 Apr 23 - v0.12	- Added section to collect /etc/fstab
 #	19 May 23 - v0.13	- Added section to collect nginx information
+#   26 Jun 23 - v0.14   - Added section to collect /etc/fapolicyd/fapolicyd.conf & rules.d
 #
 #	TODO: Make the script more modular and add more sections
 #	TODO: Add Networking Scripts
 #	
 # ##################################################
-version="0.13" 
+version="0.14" 
 
 
 if [ "$(id -u)" -ne 0 ]; then
@@ -30,7 +31,7 @@ fi
 input=$1
 PATH=$PATH:$HOME/bin:/sbin:/bin:/usr/sbin:/usr/bin
 
-DATE=`date +%d-%m-%Y\ %R.%S`
+DATE='date +%d-%m-%Y\ %R.%S'
 uptime_days=$(uptime | sed 's/.*up \([^,]*\), .*/\1/')
 
 TableOfContent () {
@@ -104,6 +105,7 @@ DetectLinuxRole () {
 				vrrp=$(echo "$psoutput" |egrep -i keepalived | wc -l)
 				firewall=$(echo "$psoutput" |egrep -i firewalld | wc -l)
 				fail2ban=$(echo "$psoutput" |egrep -i fail2ban | wc -l)
+				fapolicyd=$(echo "$psoutput" |egrep -i fapolicyd | wc -l)
 			
 
                 if (( $apache > 0 )); then
@@ -192,6 +194,10 @@ DetectLinuxRole () {
 
                 if (( $fail2ban > 0 )); then
 			      echo "<span class='fail2banicon'>Fail2ban is Active</span>"
+                fi
+
+                if (( $fapolicyd > 0 )); then
+			      echo "<span class='fapolicydicon'>Fapolicyd is Active</span>"
                 fi
 
 
@@ -1052,6 +1058,91 @@ NginxServer () {
 		fi
 }
 
+Fapolicyd () {
+		echo "<h3>Fapolicyd</h3>"
+		echo "<pre><small>"
+		echo "<xmp>"
+		cat /etc/fapolicyd/fapolicyd.conf
+		echo "</xmp>"
+		echo "</small></pre>"
+		echo '<hr style="height:2px;border-width:0;color:gray;background-color:gray;width:25%;text-align:left;margin-left:0">'
+
+		if [ -f "/etc/fapolicyd/compiled.rules" ]; then
+				echo "<h3>Firewall Configuration: /etc/fapolicyd/compiled.rules</h3>"
+				echo "<pre><small>"
+				echo "<xmp>"
+				cat /etc/fapolicyd/compiled.rules
+				echo "</xmp>"
+				echo "</small></pre>"
+				echo '<hr style="height:2px;border-width:0;color:gray;background-color:gray;width:25%;text-align:left;margin-left:0">'
+		fi
+		if [ -f "/etc/fapolicyd/compiled.rules.prev" ]; then
+				echo "<h3>Firewall Configuration: /etc/fapolicyd/compiled.rules.prev</h3>"
+				echo "<pre><small>"
+				echo "<xmp>"
+				cat /etc/fapolicyd/compiled.rules.prev
+				echo "</xmp>"
+				echo "</small></pre>"
+				echo '<hr style="height:2px;border-width:0;color:gray;background-color:gray;width:25%;text-align:left;margin-left:0">'
+		fi		
+		if [ -f "/etc/fapolicyd/fapolicyd.trust" ]; then
+				echo "<h3>Lockdown Whitelist: /etc/fapolicyd/fapolicyd.trust</h3>"
+				echo "<pre><small>"
+				echo "<xmp>"
+				cat /etc/fapolicyd/fapolicyd.trust
+				echo "</xmp>"
+				echo "</small></pre>"
+				echo '<hr style="height:2px;border-width:0;color:gray;background-color:gray;width:25%;text-align:left;margin-left:0">'
+		fi
+		if [ -f "/etc/fapolicyd/rpm-filter.conf" ]; then
+				echo "<h3>Lockdown Whitelist: /etc/fapolicyd/rpm-filter.conf</h3>"
+				echo "<pre><small>"
+				echo "<xmp>"
+				cat /etc/fapolicyd/rpm-filter.conf
+				echo "</xmp>"
+				echo "</small></pre>"
+				echo '<hr style="height:2px;border-width:0;color:gray;background-color:gray;width:25%;text-align:left;margin-left:0">'
+		fi
+		if [ -d "/etc/fapolicyd/rules.d" ]; then
+			echo "<h3>/etc/fapolicyd/rules.d directory</h3>"
+			echo "<pre><small>"
+			echo "<xmp>"
+			for f in $(find /etc/fapolicyd/rules.d -maxdepth 2 -type f)
+			do
+				echo "<h4>Contents of  ${f} ...</h4>"
+				echo "<pre>"
+				echo "<xmp>"
+				# take action on each file. $f store current file name
+				cat $f |grep -v "^# " |grep -v ^$ |grep -v "^#$"
+				echo "</xmp>"
+				echo "</pre>"
+				echo '<hr style="height:2px;border-width:0;color:gray;background-color:gray;width:25%;text-align:left;margin-left:0">'
+			done
+			echo "</xmp>"
+			echo "</small></pre>"
+			echo '<hr style="height:2px;border-width:0;color:gray;background-color:gray;width:25%;text-align:left;margin-left:0">'
+		fi
+		if [ -d "/etc/fapolicyd/trust.d" ]; then
+			echo "<h3>/etc/fapolicyd/trust.d directory</h3>"
+			echo "<pre><small>"
+			echo "<xmp>"
+			for f in $(find /etc/fapolicyd/trust.d -maxdepth 2 -type f)
+			do
+				echo "<h4>Contents of  ${f} ...</h4>"
+				echo "<pre>"
+				echo "<xmp>"
+				# take action on each file. $f store current file name
+				cat $f |grep -v "^# " |grep -v ^$ |grep -v "^#$"
+				echo "</xmp>"
+				echo "</pre>"
+				echo '<hr style="height:2px;border-width:0;color:gray;background-color:gray;width:25%;text-align:left;margin-left:0">'
+			done
+			echo "</xmp>"
+			echo "</small></pre>"
+			echo '<hr style="height:2px;border-width:0;color:gray;background-color:gray;width:25%;text-align:left;margin-left:0">'
+		fi
+}
+
 ServerFiles () {
 		if (( $apache > 0 )); then
 			ApacheServer
@@ -1320,6 +1411,9 @@ ServerFiles () {
 
 		if (( $firewall > 0 )); then
         Firewall
+		fi
+		if (( $fapolicyd > 0 )); then
+        Fapolicyd
 		fi
 
 
