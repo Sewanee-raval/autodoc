@@ -15,12 +15,13 @@
 #	14 Apr 23 - v0.12	- Added section to collect /etc/fstab
 #	19 May 23 - v0.13	- Added section to collect nginx information
 #   26 Jun 23 - v0.14   - Added section to collect /etc/fapolicyd/fapolicyd.conf & rules.d
+# 	14 Nov 23 - v0.15	- Changed mount so only physical and remote drives are listed
 #
 #	TODO: Make the script more modular and add more sections
 #	TODO: Add Networking Scripts
 #	
 # ##################################################
-version="0.14" 
+version="0.15" 
 
 
 if [ "$(id -u)" -ne 0 ]; then
@@ -363,7 +364,8 @@ DiskConfigLinux () {
         echo "<div class='page-break'> </div>"
         echo "<span id='mount'>Local Mount points <b>mount</b>"
         echo "<pre><small>"
-        mount | column -t | grep -v ":\|squashfs\|tmpfs\|cgroup" |sed -n 's/on//p' | sed -n 's/type//p'
+		mount | column -t |grep -v "snaps|squashfs\|tmpfs\|cgroup" | /bin/grep -E '^/|:/' | sed -n 's/on//p' | sed -n 's/type//p' | sort
+        #mount | column -t | grep -v ":\|squashfs\|tmpfs\|cgroup" |sed -n 's/on//p' | sed -n 's/type//p'
         echo "</small></pre>"
 		echo '<hr style="height:2px;border-width:0;color:gray;background-color:gray;width:25%;text-align:left;margin-left:0">'
         echo "<div class='page-break'></div>"
