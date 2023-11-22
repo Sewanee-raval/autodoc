@@ -17,8 +17,10 @@
 #   26 Jun 23 - v0.14   - Added section to collect /etc/fapolicyd/fapolicyd.conf & rules.d
 # 	14 Nov 23 - v0.15	- Changed mount so only physical and remote drives are listed
 #
-#	TODO: Make the script more modular and add more sections
+#	TODO: Make the script more modular and sectional
 #	TODO: Add Networking Scripts
+#	TODO: Add checks fot SELinux, FirewallD, FAPolicyD, Fail2Ban, OpenSCAP, AIDE, LogWatch
+#	TODO: Check for Active Directory Configuration
 #	
 # ##################################################
 version="0.15" 
