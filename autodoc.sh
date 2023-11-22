@@ -16,11 +16,13 @@
 #	19 May 23 - v0.13	- Added section to collect nginx information
 #   26 Jun 23 - v0.14   - Added section to collect /etc/fapolicyd/fapolicyd.conf & rules.d
 # 	14 Nov 23 - v0.15	- Changed mount so only physical and remote drives are listed
+#	15 Nov 23 - v0.16	- Added Security Section
 #
 #	TODO: Make the script more modular and sectional
 #	TODO: Add Networking Scripts
-#	TODO: Add checks fot SELinux, FirewallD, FAPolicyD, Fail2Ban, OpenSCAP, AIDE, LogWatch
-#	TODO: Check for Active Directory Configuration
+#	TODO: Add checks for the following services: FirewallD, FAPolicyD, Fail2Ban
+#	TODO: Develop checks for non-service applications: OpenSCAP, AIDE, LogWatch, & SELinux
+#	TODO: Check for Active Directory Configuration (SSSD, Kerberos, etc.)
 #	
 # ##################################################
 version="0.15" 
@@ -52,6 +54,7 @@ The following document has been automatically generated on $DATE
 	<li><a href='#role'>Server Role(s)</a></li>
 	<li><a href='#general'>General Information</a></li>
 	<li><a href='#network'>Network Configuration</a></li>
+	<li><a href='#security'>Security Configuration</a></li>
 	<li><a href='#disk'>Disk Configuration</a></li>
 	<li><a href='#configfiles'>Configuration Files</a></li>
 	<li><a href='#services'>Autostart Services</a></li>
@@ -109,6 +112,7 @@ DetectLinuxRole () {
 				firewall=$(echo "$psoutput" |egrep -i firewalld | wc -l)
 				fail2ban=$(echo "$psoutput" |egrep -i fail2ban | wc -l)
 				fapolicyd=$(echo "$psoutput" |egrep -i fapolicyd | wc -l)
+				sssd=$(echo "$psoutput" |egrep -i sssd | wc -l)
 			
 
                 if (( $apache > 0 )); then
@@ -201,6 +205,10 @@ DetectLinuxRole () {
 
                 if (( $fapolicyd > 0 )); then
 			      echo "<span class='fapolicydicon'>Fapolicyd is Active</span>"
+                fi
+
+                if (( $sssd > 0 )); then
+			      echo "<span class='fapolicydicon'>AD Authentication is Configured</span>"
                 fi
 
 
