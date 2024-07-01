@@ -317,6 +317,20 @@ NetworkConfigLinux () {
 		echo '<hr style="height:2px;border-width:0;color:gray;background-color:gray">'
 }
 
+SecurityConfigLinux() {
+	    echo "<h2 id='network' style='text-decoration:underline;'>Security Configuration</h2>"
+		
+		echo "<h3 id='ifconfig'>Network Cards</h3>"
+        echo "<span id='ifconfigspan'>Network cards configured in this server <b>ifconfig -a</b>"
+        echo "<pre><small>"
+        ifconfig -a
+        echo "</small></pre>"
+		echo "</span>"
+		echo '<hr style="height:2px;border-width:0;color:gray;background-color:gray;width:25%;text-align:left;margin-left:0">'
+        
+		
+		echo '<hr style="height:2px;border-width:0;color:gray;background-color:gray">'
+}
 
 DiskConfigLinux () {
 

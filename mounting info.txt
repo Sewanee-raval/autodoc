@@ -1,0 +1,37 @@
+sysfs                                     /sys                                sysfs        (rw,nosuid,nodev,noexec,relatime,seclabel)
+proc                                      /proc                               proc         (rw,nosuid,nodev,noexec,relatime)
+securityfs                                /sys/kernel/security                securityfs   (rw,nosuid,nodev,noexec,relatime)
+devpts                                    /dev/pts                            devpts       (rw,nosuid,noexec,relatime,seclabel,gid=5,mode=620,ptmxmode=000)
+pstore                                    /sys/fs/pstore                      pstore       (rw,nosuid,nodev,noexec,relatime,seclabel)
+efivarfs                                  /sys/firmware/efi/efivars           efivarfs     (rw,nosuid,nodev,noexec,relatime)
+bpf                                       /sys/fs/bpf                         bpf          (rw,nosuid,nodev,noexec,relatime,mode=700)
+ne                                    on  /sys/kernel/tracing                 tracefs      (rw,relatime,seclabel)
+cfigfs                                on  /sys/kernel/config                  configfs     (rw,relatime)
+/dev/mapper/ol-root                       /                                   xfs          (rw,relatime,seclabel,attr2,inode64,logbufs=8,logbsize=32k,noquota)
+selinuxfs                                 /sys/fs/selinux                     selinuxfs    (rw,relatime)
+debugfs                                   /sys/kernel/debug                   debugfs      (rw,relatime,seclabel)
+hugetlbfs                                 /dev/hugepages                      hugetlbfs    (rw,relatime,seclabel,pagesize=2M)
+systemd-1                                 /proc/sys/fs/binfmt_misc            autofs       (rw,relatime,fd=34,pgrp=1,timeout=0,minproto=5,maxproto=5,direct,pipe_ino=21064)
+mqueue                                    /dev/mqueue                         mqueue       (rw,relatime,seclabel)
+fusectl                                   /sys/fs/fuse/connections            fusectl      (rw,relatime)
+binfmt_misc                               /proc/sys/fs/binfmt_misc            binfmt_misc  (rw,relatime)
+/dev/mapper/ol-var                        /var                                xfs          (rw,nodev,relatime,seclabel,attr2,inode64,logbufs=8,logbsize=32k,noquota)
+/dev/mapper/ol-tmp                        /tmp                                xfs          (rw,nosuid,nodev,noexec,relatime,seclabel,attr2,inode64,logbufs=8,logbsize=32k,noquota)
+/dev/sda2                                 /boot                               xfs          (rw,nosuid,nodev,relatime,seclabel,attr2,inode64,logbufs=8,logbsize=32k,noquota)
+/dev/mapper/ol-var_tmp                    /var/tmp                            xfs          (rw,nosuid,nodev,noexec,relatime,seclabel,attr2,inode64,logbufs=8,logbsize=32k,noquota)
+/dev/mapper/ol-home                       /home                               xfs          (rw,nodev,relatime,seclabel,attr2,inode64,logbufs=8,logbsize=32k,noquota)
+/dev/mapper/ol-var_log                    /var/log                            xfs          (rw,nosuid,nodev,noexec,relatime,seclabel,attr2,inode64,logbufs=8,logbsize=32k,noquota)
+/dev/mapper/ol-var_log_audit              /var/log/audit                      xfs          (rw,nosuid,nodev,noexec,relatime,seclabel,attr2,inode64,logbufs=8,logbsize=32k,noquota)
+/dev/sda1                                 /boot/efi                           vfat         (rw,nodev,relatime,fmask=0077,dmask=0077,codepage=437,iocharset=ascii,shortname=winnt,errors=remount-ro)
+
+
+ mount | column -t | grep -v ":\|squashfs\|tmpfs\|cgroup\|sysfs\|sys\|proc" |sed -n 's/on//p' | sed -n 's/type//p'
+ 
+ mount | column -t |grep -v "snaps" | /bin/grep -E '^/|:/' | sort
+ 
+ ^((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)\.?\b){4}$
+ mount | /bin/grep -E "^((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)(\.(?!$)|$)){4}$"
+ 
+ ^\/|\:\/
+ 
+ mount | column -t |grep -v ":\|snaps" | /bin/grep -E '^\/|\:\/' | |sed -n 's/on//p' | sed -n 's/type//p' | sort
