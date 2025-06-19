@@ -123,3 +123,9 @@ Document Output
 
 This is an example of the generated document for a Linux server
 https://github.com/hernan-fernandez/autodoc/raw/master/output_sample.pdf
+
+
+Attribution
+===========
+This application is a derivative work based on 'Autodoc' by Hernan Fernandez Retamal, licensed under the GNU GENERAL PUBLIC LICENSE v3.
+See the 'licenses' directory for the full license text. The original software is available at [https://github.com/hernan-fernandez/autodoc]." 

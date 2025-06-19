@@ -1,12 +1,26 @@
-#!/bin/bash
-# ##################################################
-# autodoc.sh - Automated System Documentation
-#
-# Raymond Val
-#
-# HISTORY:
-#
-# * DATE - v0.6  - First Creation
+#!/usr/bin/env bash
+#----------------------------------------------------------------------
+# Filename: autodoc.sh
+# Written : 22-May-2017 (Hernan Fernandez Retamal) - Intitial Author
+# Purpose : Automated System Documentation
+# Usage   : ./autodoc.sh
+#         :
+# Input   : N/A
+#         :
+# Output  : N/A
+#         :
+# Notes   : This script is designed to collect information about a Linux system
+#         : and generate a HTML report.
+#         :
+# Updated :
+#         :
+#----------------------------------------------------------------------
+#   Version History:
+#	04 Jan 23 - v0.2	- Updated sections for Network, Disk, and Config Files
+#   10 Jan 23 - v0.3	- Updated sections for Security, Last Update, CPU, RAM, DST
+#   18 Jan 23 - v0.4	- Updated sections for Config Files, Group, User, Host, Fstab, DNS, Banner, Yumcron
+#   19 Jan 23 - v0.5	- Updated sections for Apache, Nginx, MySQL, Postgres, Oracle, Samba, NFS, DNS, DHCP, FTP
+#   26 Jan 23 - v0.6	- Updated sections for HAProxy, Keepalived, FirewallD, Fail2Ban, FAPolicyD, SSSD
 #   02 Feb 23 - v0.7	- Updated for Firewall Rules
 #   21 Feb 23 - v0.8 	- Updated for fail2ban
 #	08 Mar 23 - v0.9	- Added Sewanee Logo to Cover Page
@@ -21,26 +35,31 @@
 #
 #	TODO: Make the script more modular and add more sections
 #	TODO: Add Networking Scripts
+#	TODO: Add checks for the following services: FirewallD, FAPolicyD, Fail2Ban
 #	TODO: Add testing for SELinux, OpenSCAP, AIDE, Logwatch, FIPS Setting
+#	TODO: Check for Active Directory Configuration (SSSD, Kerberos, etc.)
 #	TODO: Add Sections: Document Management, About, Functional, and Operational
 #	TODO: Add Network Infrastructure under Technical
 #	TODO: Add Contributors and Version Control under Document Management
 #	TODO: Add Overview and Service Description under About
 #	TODO: Add Users and Contact List under Functional
 #	TODO: Add System Security, Remote Access, Server Infrastructure, Logging, SSL Certs, Backup, Licenses under Operational
-#	TODO: Make the script more modular and sectional
-#	TODO: Add Networking Scripts
-#	TODO: Add checks for the following services: FirewallD, FAPolicyD, Fail2Ban
-#	TODO: Develop checks for non-service applications: OpenSCAP, AIDE, LogWatch, & SELinux
-#	TODO: Check for Active Directory Configuration (SSSD, Kerberos, etc.)
+
 #
-# ##################################################
-version="0.16"
+#----------------------------------------------------------------------
+
+# Set Name and Version
+declare -r SCRIPT_NAME=""
+declare -r VERSION="0.17.0"
 
 if [ "$(id -u)" -ne 0 ]; then
 	echo 'This script must be run by root or sudo' >&2
 	exit 1
 fi
+# Set Working Variables
+prog_name=$(basename "${0}")
+timestamp=$(date +"%Y-%m-%d %H:%M:%S")
+datestamp=$(date +"%Y-%m-%d")
 
 input=$1
 PATH=$PATH:$HOME/bin:/sbin:/bin:/usr/sbin:/usr/bin
