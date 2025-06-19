@@ -1,0 +1,18 @@
+---
+collections:
+  - name: community.general
+    type: galaxy
+  # - name: ansible.posix
+  #   type: galaxy
+  # - name: community.mysql
+  #   type: galaxy
+  # - name: community.vmware
+  #   type: galaxy
+  # - name: community.zabbix
+  #   type: galaxy
+  # - name: awx.awx
+  #   type: galaxy
+  # - name: ansible.windows
+  #   type: galaxy
+  # - name: microsoft.ad
+  #   type: galaxy

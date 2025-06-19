@@ -1,0 +1,87 @@
+# -----------------------------------------------------------------
+#   Name:           autodoc.yaml
+#   Description:    Automatically Document a system
+#   Author:         Raymond Val
+#   Notes:
+#   Revision History:
+#   Name:           Date:        Description:
+#   Raymond Val     12/09/2022
+# -----------------------------------------------------------------
+---
+- name: Autodoc Documentation System
+  hosts: all
+  become: true
+  gather_facts: true
+
+  tasks:
+    - name: Execute Script
+      # ansible.builtin.script: /var/lib/ol-automation-manager/projects/Documentation/autodoc.sh
+      ansible.builtin.script: "{{ playbook_dir }}/autodoc.sh"
+      register: with_output
+
+      #          - name: output information
+      #            debug:
+      #                    var: with_output
+
+    - name: Write to file in HTML format
+      become: false
+      delegate_to: localhost
+      ansible.builtin.copy:
+        content: "{{ with_output.stdout }}"
+        dest: "/home/documentation/{{ ansible_hostname }}.{{ ansible_date_time.date }}.html"
+        # owner: ansibleuser
+        # group: ansibleuser
+        mode: "0644"
+
+    - name: Write to file in markdown format
+      become: false
+      delegate_to: localhost
+      ansible.builtin.copy:
+        content: "{{ with_output.stdout }}"
+        dest: "/home/documentation/{{ ansible_hostname }}.{{ ansible_date_time.date }}.md"
+        # owner: ansibleuser
+        # group: ansibleuser
+        mode: "0644"
+
+    # Removing wkhtmltopdf as it is not longer supported
+    # Will need a new solution
+    # - name: Convert html to pdf
+    #   become: false
+    #   delegate_to: localhost
+    #   ansible.builtin.command:
+    #     argv:
+    #       - /usr/local/bin/wkhtmltopdf
+    #       - "/home/Documentation/{{ ansible_hostname }}.{{ ansible_date_time.date }}.html"
+    #       - "/home/Documentation/{{ ansible_hostname }}.{{ ansible_date_time.date }}.pdf"
+    #   register: wk_output
+
+    # Removing Pandoc until I can figure a way to use it with Ansible AWX
+    # maybe placing pandoc in /opt/pandoc?
+    - name: Convert Using Pandoc
+      become: false
+      delegate_to: localhost
+      ansible.builtin.command:
+        argv:
+          - /opt/bin/pandoc
+          - "--lua-filter=stripmeta.lua"
+          - "-o /home/documentation/{{ ansible_hostname }}.{{ ansible_date_time.date }}.docx"
+          - "-s /home/documentation/{{ ansible_hostname }}.{{ ansible_date_time.date }}.html"
+
+    - name: Sending Completion E-mail
+      become: false
+      community.general.mail:
+        host: mail.sewanee.edu
+        port: 25
+        to: raval@sewanee.edu
+        from: AWX Provisioning <awx@awx.sewanee.edu>
+        subject: Documentation Email for {{ ansible_hostname }}
+        body: "{{ lookup('template','files/mail_body.html.j2') }}"
+        secure: starttls
+        subtype: html
+        charset: utf8
+        attach:
+          - "/home/documentation/{{ ansible_hostname }}.{{ ansible_date_time.date }}.html"
+          - "/home/documentation/{{ ansible_hostname }}.{{ ansible_date_time.date }}.md"
+          - "/home/documentation/{{ ansible_hostname }}.{{ ansible_date_time.date }}.docx"
+      delegate_to: localhost
+      #when: ansible_default_ipv4.network != '152.97.30.0'

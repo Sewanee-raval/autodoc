@@ -1,0 +1,2 @@
+wkhtmltox
+pandoc

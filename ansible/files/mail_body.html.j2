@@ -1,0 +1,51 @@
+<html>
+ <body>
+   <h2>System Provisioning Summary for {{ ansible_hostname }}</h2>
+   <p>Attached are the Autodoc summary files<br /></p>
+   <p>To complete the provisioning the following steps will need to to be taken:<br /></p>
+   <p>1. Submit the following information to the Server Inventory Database:<br /></p>
+    <table style="width: 100%" border="0">
+      <tbody>
+        <tr>
+          <th>Powerstate</th>
+          <th>VM Name</th>
+          <th>DNS Name:</th>
+          <th>Prem Req:</th>
+          <th>CPUs:</th>
+          <th>Memory:</th>
+          <th>Disks:</th>
+          <th>Network #1:</th>
+          <th>OS:</th>
+          <th>Function:</th>
+          <th>Primary Admin:</th>
+        </tr>
+        <tr>
+          <td>PoweredOn
+          </td>
+          <td>"{{ ansible_hostname }}"
+          </td>
+          <td>"{{ ansible_fqdn }}"
+          </td>
+          <td>Y
+          </td>
+          <td>"{{ ansible_processor_count }}"
+          </td>
+          <td>"{{ ansible_memtotal_mb }}"
+          </td>
+          <td>"{{ ansible_devices.sda.size }}"
+          </td>
+          <td>"{{ ansible_default_ipv4.network }}"
+          </td>
+          <td>"{{ ansible_distribution_file_search_string }} {{ ansible_distribution_version }}"
+          </td>
+          <td><br />
+          </td>
+          <td>Ray
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <p><br /></p>
+    <p>2. If a SSL certificate was installed, the Cert Inventory file needs to be updated<br /></p>
+ </body>
+</html>
