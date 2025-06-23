@@ -5,7 +5,12 @@
 #   Notes:
 #   Revision History:
 #   Name:           Date:        Description:
-#   Raymond Val     12/09/2022
+#   Raymond Val     12/09/2022   Initial Version
+#   Raymond Val     06/20/2025   Updated to push documentation to dokuwiki
+#----------------------------------------------------------------------
+#   Version History:
+# 	09 Dec 22 - v0.1	- Initial version
+# 	20 Jun 25 - v0.2	- Updated to push documentation to dokuwiki
 # -----------------------------------------------------------------
 ---
 - name: Autodoc Documentation System
@@ -13,9 +18,13 @@
   become: true
   gather_facts: true
 
+  vars:
+    documentation_dir: "/home/documentation"
+    pandoc_dir: "/opt/pandoc"
+    pandoc_filters_dir: "/opt/pandoc/filters"
+
   tasks:
     - name: Execute Script
-      # ansible.builtin.script: /var/lib/ol-automation-manager/projects/Documentation/autodoc.sh
       ansible.builtin.script: "{{ playbook_dir }}/autodoc.sh"
       register: with_output
 
@@ -28,9 +37,9 @@
       delegate_to: localhost
       ansible.builtin.copy:
         content: "{{ with_output.stdout }}"
-        dest: "/home/documentation/{{ ansible_hostname }}.{{ ansible_date_time.date }}.html"
-        # owner: ansibleuser
-        # group: ansibleuser
+        dest: "{{ documentation_dir }}/{{ ansible_hostname }}.{{ ansible_date_time.date }}.html"
+        # owner: awx
+        # group: awx
         mode: "0644"
 
     - name: Write to file in markdown format
@@ -38,50 +47,72 @@
       delegate_to: localhost
       ansible.builtin.copy:
         content: "{{ with_output.stdout }}"
-        dest: "/home/documentation/{{ ansible_hostname }}.{{ ansible_date_time.date }}.md"
-        # owner: ansibleuser
-        # group: ansibleuser
+        dest: "{{ documentation_dir }}/{{ ansible_hostname }}.{{ ansible_date_time.date }}.md"
+        # owner: awx
+        # group: awx
         mode: "0644"
 
-    # Removing wkhtmltopdf as it is not longer supported
-    # Will need a new solution
-    # - name: Convert html to pdf
-    #   become: false
-    #   delegate_to: localhost
-    #   ansible.builtin.command:
-    #     argv:
-    #       - /usr/local/bin/wkhtmltopdf
-    #       - "/home/Documentation/{{ ansible_hostname }}.{{ ansible_date_time.date }}.html"
-    #       - "/home/Documentation/{{ ansible_hostname }}.{{ ansible_date_time.date }}.pdf"
-    #   register: wk_output
-
-    # Removing Pandoc until I can figure a way to use it with Ansible AWX
-    # maybe placing pandoc in /opt/pandoc?
     - name: Convert Using Pandoc
+      become: false
+      delegate_to: localhost
+      ansible.builtin.command: 
+        argv:
+          - "/opt/pandoc/bin/pandoc"
+          - "--defaults={{ pandoc_dir }}/defaults.yaml"
+          - "--lua-filter={{ pandoc_filters_dir }}/stripmeta.lua"
+          - -s
+          - -o 
+          - "/home/documentation/{{ ansible_hostname }}.{{ ansible_date_time.date }}.docx"
+          - "/home/documentation/{{ ansible_hostname }}.{{ ansible_date_time.date }}.html"
+      register: pandoc_output
+
+    - name: Create documentation for dokuwiki
       become: false
       delegate_to: localhost
       ansible.builtin.command:
         argv:
-          - /opt/bin/pandoc
-          - "--lua-filter=stripmeta.lua"
-          - "-o /home/documentation/{{ ansible_hostname }}.{{ ansible_date_time.date }}.docx"
-          - "-s /home/documentation/{{ ansible_hostname }}.{{ ansible_date_time.date }}.html"
-
-    - name: Sending Completion E-mail
-      become: false
-      community.general.mail:
-        host: mail.sewanee.edu
-        port: 25
-        to: raval@sewanee.edu
-        from: AWX Provisioning <awx@awx.sewanee.edu>
-        subject: Documentation Email for {{ ansible_hostname }}
-        body: "{{ lookup('template','files/mail_body.html.j2') }}"
-        secure: starttls
-        subtype: html
-        charset: utf8
-        attach:
+          - "/opt/pandoc/bin/pandoc"
+          - -s
+          - -t
+          - "dokuwiki"
+          - -o 
+          - "/home/documentation/{{ ansible_hostname }}.{{ ansible_date_time.date }}.txt"
           - "/home/documentation/{{ ansible_hostname }}.{{ ansible_date_time.date }}.html"
-          - "/home/documentation/{{ ansible_hostname }}.{{ ansible_date_time.date }}.md"
-          - "/home/documentation/{{ ansible_hostname }}.{{ ansible_date_time.date }}.docx"
-      delegate_to: localhost
-      #when: ansible_default_ipv4.network != '152.97.30.0'
+      register: dokuwiki_output
+    
+    # - name: Sending Completion E-mail
+    #   become: false
+    #   community.general.mail:
+    #     host: mail.sewanee.edu
+    #     port: 25
+    #     to: raval@sewanee.edu
+    #     from: AWX Provisioning <awx@awx.sewanee.edu>
+    #     subject: Documentation Email for {{ ansible_hostname }}
+    #     body: "{{ lookup('template','files/mail_body.html.j2') }}"
+    #     secure: starttls
+    #     subtype: html
+    #     charset: utf8
+    #     attach:
+    #       - "{{ documentation_dir }}/{{ ansible_hostname }}.{{ ansible_date_time.date }}.html"
+    #       - "{{ documentation_dir }}/{{ ansible_hostname }}.{{ ansible_date_time.date }}.md"
+    #       - "{{ documentation_dir }}/{{ ansible_hostname }}.{{ ansible_date_time.date }}.docx"
+    #   delegate_to: localhost
+    #   #when: ansible_default_ipv4.network != '152.97.30.0'
+
+    - name: Create system directory if it does not exist
+      ansible.builtin.file:
+        path: "/var/www/html/SDI/dokuwiki/data/pages/systems/{{ ansible_hostname }}"
+        state: directory
+        mode: '0755'
+        owner: apache
+        group: apache
+      delegate_to: sol20.sewanee.edu
+
+    - name: Copy documentation to sol20.sewanee.edu
+      ansible.builtin.copy:
+        src: "{{ documentation_dir }}/{{ ansible_hostname }}.{{ ansible_date_time.date }}.txt"
+        dest: "/var/www/html/SDI/dokuwiki/data/pages/systems/{{ ansible_hostname }}/{{ ansible_hostname }}.{{ ansible_date_time.date }}.txt"
+        owner: apache
+        group: apache
+        mode: "0644"
+      delegate_to: sol20.sewanee.edu

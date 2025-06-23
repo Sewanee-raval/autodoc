@@ -35,9 +35,7 @@
 #
 #	TODO: Make the script more modular and add more sections
 #	TODO: Add Networking Scripts
-#	TODO: Add checks for the following services: FirewallD, FAPolicyD, Fail2Ban
 #	TODO: Add testing for SELinux, OpenSCAP, AIDE, Logwatch, FIPS Setting
-#	TODO: Check for Active Directory Configuration (SSSD, Kerberos, etc.)
 #	TODO: Add Sections: Document Management, About, Functional, and Operational
 #	TODO: Add Network Infrastructure under Technical
 #	TODO: Add Contributors and Version Control under Document Management
@@ -64,12 +62,12 @@ datestamp=$(date +"%Y-%m-%d")
 input=$1
 PATH=$PATH:$HOME/bin:/sbin:/bin:/usr/sbin:/usr/bin
 
-DATE='date +%d-%m-%Y\ %R.%S'
+DATE="date +%d-%m-%Y\ %R.%S"
 uptime_days=$(uptime | sed 's/.*up \([^,]*\), .*/\1/')
 
 PreparerName="Raymond Val"
-PreparerPhone="[Company Phone]"
-PreparerEmail="[Company E-mail]"
+PreparerPhone="931-598-1355"
+PreparerEmail="raval@sewanee.edu"
 
 TableOfContent() {
 
@@ -225,14 +223,20 @@ DetectLinuxRole() {
 
 		if (($firewall > 0)); then
 			echo "<span class='firewallicon'>Firewalld is Active</span>"
+		else
+			echo "<span class='firewallicon'>Firewalld is Not Active</span>"
 		fi
 
 		if (($fail2ban > 0)); then
 			echo "<span class='fail2banicon'>Fail2ban is Active</span>"
+		else
+			echo "<span class='fail2banicon'>Fail2ban is Not Active</span>"
 		fi
 
 		if (($fapolicyd > 0)); then
 			echo "<span class='fapolicydicon'>Fapolicyd is Active</span>"
+		else
+			echo "<span class='fapolicydicon'>Fapolicyd is Not Active</span>"
 		fi
 		if (($sssd > 0)); then
 			echo "<span class='adauthicon'>AD Authentication is Configured</span>"
@@ -428,6 +432,21 @@ SecurityConfigLinux() {
 	sestatus
 	echo "</small></pre>"
 	echo "</span>"
+
+	# if (($sestatus > 0)); then
+	# 	echo "<h2 id='sestatusfiles' style='text-decoration:underline;'>SELinux Status</h2>"
+	# 	echo "<span class='selinuxicon'>SELinux Status</span>"
+	# 	echo "<pre><small>"
+	# 	echo "<xmp>"
+	# 	sestatus | grep -E "SELinux status" | awk '{ gsub (/ /, "", $0); print}' |  awk -F'[:]' '{print $2}'
+	# 	# If SELinux is enabled, show the mode
+	# 	if sestatus | grep -q "Current mode"; then
+	# 		sestatus | grep -E "Current mode" | awk '{ gsub (/ /, "", $0); print}' |  awk -F'[:]' '{print $2}'
+	# 	fi
+	# 	echo "</xmp>"
+	# 	echo "</small></pre>"
+	# 	echo '<hr style="height:2px;border-width:0;color:gray;background-color:gray;width:25%;text-align:left;margin-left:0">'
+	# fi
 }
 
 LastUpdateLinux() {
@@ -1434,7 +1453,7 @@ ServerFiles() {
 	if (($fapolicyd > 0)); then
 		Fapolicyd
 	fi
-
+	]
 	if (($count_mount > 0)); then
 		echo "<h2 id='nisclientfiles' style='text-decoration:underline;'>NIS Client Files</h2>"
 		if [ -f "/etc/yp.conf" ]; then
