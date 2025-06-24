@@ -33,6 +33,7 @@
 #	15 Nov 23 - v0.16	- Added Security Section
 #	03 Jan 24 - v0.17 	- Fixed issue with HAProxy section not reading correct conf file, added Disclaimer Page
 #	06 Jun 25 - v0.18	- Added FAPolicyD section, updated SELinux, OpenSCAP, AIDE, Logwatch, FIPS Mode sections
+#						- Updated sections for FirewallD, Fail2Ban, SSSD
 #
 #	TODO: Make the script more modular and add more sections
 #	TODO: Add Networking Scripts
