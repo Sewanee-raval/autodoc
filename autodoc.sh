@@ -32,10 +32,10 @@
 # 	14 Nov 23 - v0.15	- Changed mount so only physical and remote drives are listed
 #	15 Nov 23 - v0.16	- Added Security Section
 #	03 Jan 24 - v0.17 	- Fixed issue with HAProxy section not reading correct conf file, added Disclaimer Page
+#	06 Jun 25 - v0.18	- Added FAPolicyD section, updated SELinux, OpenSCAP, AIDE, Logwatch, FIPS Mode sections
 #
 #	TODO: Make the script more modular and add more sections
 #	TODO: Add Networking Scripts
-#	TODO: Add testing for SELinux, OpenSCAP, AIDE, Logwatch, FIPS Setting
 #	TODO: Add Sections: Document Management, About, Functional, and Operational
 #	TODO: Add Network Infrastructure under Technical
 #	TODO: Add Contributors and Version Control under Document Management
@@ -48,7 +48,7 @@
 
 # Set Name and Version
 declare -r SCRIPT_NAME=""
-declare -r VERSION="0.17.0"
+declare -r VERSION="0.18.0"
 
 if [ "$(id -u)" -ne 0 ]; then
 	echo 'This script must be run by root or sudo' >&2
@@ -136,9 +136,6 @@ DetectLinuxRole() {
 		tomcat=$(echo "$psoutput" | egrep -i tomcat | wc -l)
 		haproxy=$(echo "$psoutput" | egrep -i haproxy | wc -l)
 		vrrp=$(echo "$psoutput" | egrep -i keepalived | wc -l)
-		firewall=$(echo "$psoutput" | egrep -i firewalld | wc -l)
-		fail2ban=$(echo "$psoutput" | egrep -i fail2ban | wc -l)
-		fapolicyd=$(echo "$psoutput" | egrep -i fapolicyd | wc -l)
 		sssd=$(echo "$psoutput" | egrep -i sssd | wc -l)
 
 		if (($apache > 0)); then
@@ -220,28 +217,6 @@ DetectLinuxRole() {
 		if (($vrrp > 0)); then
 			echo "<span class='vrrpicon'>Keepalive (VRRP) Server</span>"
 		fi
-
-		if (($firewall > 0)); then
-			echo "<span class='firewallicon'>Firewalld is Active</span>"
-		else
-			echo "<span class='firewallicon'>Firewalld is Not Active</span>"
-		fi
-
-		if (($fail2ban > 0)); then
-			echo "<span class='fail2banicon'>Fail2ban is Active</span>"
-		else
-			echo "<span class='fail2banicon'>Fail2ban is Not Active</span>"
-		fi
-
-		if (($fapolicyd > 0)); then
-			echo "<span class='fapolicydicon'>Fapolicyd is Active</span>"
-		else
-			echo "<span class='fapolicydicon'>Fapolicyd is Not Active</span>"
-		fi
-		if (($sssd > 0)); then
-			echo "<span class='adauthicon'>AD Authentication is Configured</span>"
-		fi
-
 	else
 		echo "No known services has been detected in this server."
 	fi
@@ -424,29 +399,187 @@ DiskConfigLinux() {
 	echo '<hr style="height:2px;border-width:0;color:gray;background-color:gray">'
 }
 
+SELinuxStatus() {
+	echo "<h3 id='sestatusfiles' style='text-decoration:underline;'>SELinux Status</h3>"
+	if hash sestatus 2>/dev/null; then
+		sestatus >/dev/null 2>&1
+		sestatus=$?
+	else
+		sestatus=1
+	fi
+
+	if (($sestatus > 0)); then
+		echo "<span class='selinuxicon'>SELinux is not installed or not enabled</span>"
+	else
+		sestatus=$(sestatus | grep "Current mode" | awk '{print $3}')
+		echo "<span class='selinuxicon'>SELinux is installed and enabled</span>"
+		echo "<span class='selinuxicon'>SELinux status is: $sestatus </span>"
+
+	fi
+	echo '<hr style="height:2px;border-width:0;color:gray;background-color:gray;width:25%;text-align:left;margin-left:0">'
+}
+
+OpenSCAPLinuxStatus() {
+	echo "<h3 id='openscapfiles' style='text-decoration:underline;'>OpenSCAP Status</h3>"
+	if hash oscap 2>/dev/null; then
+		oscap --version >/dev/null 2>&1
+		oscapstatus=$?
+	else
+		oscapstatus=1
+	fi
+
+	if (($oscapstatus > 0)); then
+		echo "<span class='openscapicon'>OpenSCAP is not installed or not enabled</span>"
+	else
+		oscapversion=$(oscap --version | grep "command line tool" | awk '{print $6}')
+		echo "<span class='openscapicon'>OpenSCAP is installed and enabled</span>"
+		echo "<span class='openscapicon'>OpenSCAP version is: $oscapversion </span>"
+	fi
+	echo '<hr style="height:2px;border-width:0;color:gray;background-color:gray;width:25%;text-align:left;margin-left:0">'
+}
+
+AIDELinuxStatus() {
+	echo "<h3 id='aidefiles' style='text-decoration:underline;'>AIDE Status</h3>"
+	if hash aide 2>/dev/null; then
+		aide --version >/dev/null 2>&1
+		aidestatus=$?
+	else
+		aidestatus=1
+	fi
+
+	if (($aidestatus > 0)); then
+		echo "<span class='aideicon'>AIDE is not installed or not enabled</span>"
+	else
+		aideversion=$(aide --version 2>&1 | head -n 1 | awk '{print $2}')
+		echo "<span class='aideicon'>AIDE is installed and enabled</span>"
+		echo "<span class='aideicon'>AIDE version is: $aideversion </span>"
+	fi
+	echo '<hr style="height:2px;border-width:0;color:gray;background-color:gray;width:25%;text-align:left;margin-left:0">'
+}
+
+LogwatchLinuxStatus() {
+	echo "<h3 id='logwatchfiles' style='text-decoration:underline;'>Logwatch Status</h3>"
+	if hash logwatch 2>/dev/null; then
+		logwatch --version >/dev/null 2>&1
+		logwatchstatus=$?
+	else
+		logwatchstatus=1
+	fi
+
+	if (($logwatchstatus > 0)); then
+		echo "<span class='logwatchicon'>Logwatch is not installed or not enabled</span>"
+	else
+		logwatchversion=$(logwatch --version | awk '{print $2}')
+		echo "<span class='logwatchicon'>Logwatch is installed and enabled</span>"
+		echo "<span class='logwatchicon'>Logwatch version is: $logwatchversion </span>"
+	fi
+	echo '<hr style="height:2px;border-width:0;color:gray;background-color:gray;width:25%;text-align:left;margin-left:0">'
+}
+
+FIPSModeLinuxStatus() {
+	echo "<h3 id='fipsfiles' style='text-decoration:underline;'>FIPS Mode Status</h3>"
+	if hash fips-mode-setup 2>/dev/null; then
+		fips-mode-setup --check >/dev/null 2>&1
+		fipsstatus=$?
+	else
+		fipsstatus=1
+	fi
+
+	if (($fipsstatus > 0)); then
+		echo "<span class='fipsicon'>FIPS Mode is enabled</span>"
+	else
+		echo "<span class='fipsicon'>FIPS Mode is not enabled</span>"
+	fi
+	echo '<hr style="height:2px;border-width:0;color:gray;background-color:gray;width:25%;text-align:left;margin-left:0">'
+}
+FirewalldLinuxStatus() {
+	echo "<h3 id='firewalldfiles' style='text-decoration:underline;'>Firewalld Status</h3>"
+	if hash firewall-cmd 2>/dev/null; then
+		firewall-cmd --state >/dev/null 2>&1
+		firewall=$?
+	else
+		firewall=1
+	fi
+
+	if (($firewall > 0)); then
+		echo "<span class='firewallicon'>Firewalld is not installed or not enabled</span>"
+	else
+		echo "<span class='firewallicon'>Firewalld is installed and enabled</span>"
+	fi
+	echo '<hr style="height:2px;border-width:0;color:gray;background-color:gray;width:25%;text-align:left;margin-left:0">'
+
+	#		firewall=$(echo "$psoutput" | egrep -i firewalld | wc -l)
+	# if (($firewall > 0)); then
+	# 	echo "<span class='firewallicon'>Firewalld is Active</span>"
+	# else
+	# 	echo "<span class='firewallicon'>Firewalld is Not Active</span>"
+	# fi
+
+}
+
+Fail2banLinuxStatus() {
+	echo "<h3 id='fail2banfiles' style='text-decoration:underline;'>Fail2Ban Status</h3>"
+	if hash fail2ban-client 2>/dev/null; then
+		fail2ban-client status >/dev/null 2>&1
+		fail2ban=$?
+	else
+		fail2ban=1
+	fi
+
+	if (($fail2ban > 0)); then
+		echo "<span class='fail2banicon'>Fail2Ban is not installed or not enabled</span>"
+	else
+		echo "<span class='fail2banicon'>Fail2Ban is installed and enabled</span>"
+	fi
+	echo '<hr style="height:2px;border-width:0;color:gray;background-color:gray;width:25%;text-align:left;margin-left:0">'
+
+	#		fail2ban=$(echo "$psoutput" | egrep -i fail2ban | wc -l)
+	# if (($fail2ban > 0)); then
+	# 	echo "<span class='fail2banicon'>Fail2ban is Active</span>"
+	# else
+	# 	echo "<span class='fail2banicon'>Fail2ban is Not Active</span>"
+	# fi
+}
+
+FapolicdLinuxStatus() {
+	fapolicydstatus=$(echo "$psoutput" | egrep -i fapolicyd | wc -l)
+	echo "<h3 id='fapolicydfiles' style='text-decoration:underline;'>Fapolicyd Status</h3>"
+	if hash fapolicyd 2>/dev/null; then
+		fapolicydstatus=$(echo "$psoutput" | egrep -i fapolicyd | wc -l)
+	else
+		fapolicydstatus=0
+	fi
+
+	if (($fapolicydstatus > 0)); then
+		echo "<span class='fapolicydicon'>Fapolicyd is installed and enabled</span>"
+	else
+		echo "<span class='fapolicydicon'>Fapolicyd is not installed or not enabled</span>"
+	fi
+	echo '<hr style="height:2px;border-width:0;color:gray;background-color:gray;width:25%;text-align:left;margin-left:0">'
+
+	#		fapolicyd=$(echo "$psoutput" | egrep -i fapolicyd | wc -l)
+	# if (($fapolicyd > 0)); then
+	# 	echo "<span class='fapolicydicon'>Fapolicyd is Active</span>"
+	# else
+	# 	echo "<span class='fapolicydicon'>Fapolicyd is Not Active</span>"
+	# fi
+	# if (($sssd > 0)); then
+	# 	echo "<span class='adauthicon'>AD Authentication is Configured</span>"
+	# fi
+
+}
+
 SecurityConfigLinux() {
 	echo "<h2 id='security' style='text-decoration:underline;'>Security Configuration</h2>"
-	echo "<h3 id='selinux'>SELinux</h3>"
-	echo "<span id='selinuxspan'>SELinux Status <b>sestatus</b>"
-	echo "<pre><small>"
-	sestatus
-	echo "</small></pre>"
-	echo "</span>"
-
-	# if (($sestatus > 0)); then
-	# 	echo "<h2 id='sestatusfiles' style='text-decoration:underline;'>SELinux Status</h2>"
-	# 	echo "<span class='selinuxicon'>SELinux Status</span>"
-	# 	echo "<pre><small>"
-	# 	echo "<xmp>"
-	# 	sestatus | grep -E "SELinux status" | awk '{ gsub (/ /, "", $0); print}' |  awk -F'[:]' '{print $2}'
-	# 	# If SELinux is enabled, show the mode
-	# 	if sestatus | grep -q "Current mode"; then
-	# 		sestatus | grep -E "Current mode" | awk '{ gsub (/ /, "", $0); print}' |  awk -F'[:]' '{print $2}'
-	# 	fi
-	# 	echo "</xmp>"
-	# 	echo "</small></pre>"
-	# 	echo '<hr style="height:2px;border-width:0;color:gray;background-color:gray;width:25%;text-align:left;margin-left:0">'
-	# fi
+	SELinuxStatus
+	OpenSCAPLinuxStatus
+	AIDELinuxStatus
+	LogwatchLinuxStatus
+	FIPSModeLinuxStatus
+	FirewalldLinuxStatus
+	Fail2banLinuxStatus
+	FapolicdLinuxStatus
+	echo "<div class='page-break'> </div>"
 }
 
 LastUpdateLinux() {
@@ -1112,7 +1245,7 @@ Fapolicyd() {
 	echo '<hr style="height:2px;border-width:0;color:gray;background-color:gray;width:25%;text-align:left;margin-left:0">'
 
 	if [ -f "/etc/fapolicyd/compiled.rules" ]; then
-		echo "<h3>Firewall Configuration: /etc/fapolicyd/compiled.rules</h3>"
+		echo "<h3>Fapolicyd Configuration: /etc/fapolicyd/compiled.rules</h3>"
 		echo "<pre><small>"
 		echo "<xmp>"
 		cat /etc/fapolicyd/compiled.rules
@@ -1121,7 +1254,7 @@ Fapolicyd() {
 		echo '<hr style="height:2px;border-width:0;color:gray;background-color:gray;width:25%;text-align:left;margin-left:0">'
 	fi
 	if [ -f "/etc/fapolicyd/compiled.rules.prev" ]; then
-		echo "<h3>Firewall Configuration: /etc/fapolicyd/compiled.rules.prev</h3>"
+		echo "<h3>Fapolicyd Configuration: /etc/fapolicyd/compiled.rules.prev</h3>"
 		echo "<pre><small>"
 		echo "<xmp>"
 		cat /etc/fapolicyd/compiled.rules.prev
@@ -1446,14 +1579,6 @@ ServerFiles() {
 		echo "<div class='page-break'></div>"
 	fi
 
-	if (($firewall > 0)); then
-		Firewall
-	fi
-
-	if (($fapolicyd > 0)); then
-		Fapolicyd
-	fi
-	]
 	if (($count_mount > 0)); then
 		echo "<h2 id='nisclientfiles' style='text-decoration:underline;'>NIS Client Files</h2>"
 		if [ -f "/etc/yp.conf" ]; then
@@ -1659,7 +1784,7 @@ SERVICE2:  <<Service Description>>
 "
 }
 
-FunctionPage() {
+FunctionalPage() {
 	echo "
 	<div style='page-break-before:always;'></div>
 	<h1>Functional</h1>
@@ -1679,6 +1804,32 @@ FunctionPage() {
 "
 }
 
+OperationalPage() {
+	echo "Operational Page"
+	# Remote access
+	# Network infrastructure
+	# Server infrastructure
+	# Logging
+	# Monitoring
+	# SSL Certificates
+	# Backup
+	# Licenses
+}
+
+SecurityPage() {
+	echo "Security Page"
+	# SELinux
+	# OpenSCAP
+	# AIDE
+	# Logwatch
+	# Fail2ban
+	# Firewalld
+	# Fapolicyd
+	# ClamAV
+	# FIPS Setting
+	#
+}
+
 unamestr=$(uname)
 
 case "$unamestr" in
@@ -1689,7 +1840,8 @@ Linux*)
 	DisclaimerPage
 	DocumentManagementPage
 	AboutPage
-	FunctionPage
+	FunctionalPage
+	TechnicalPage
 	DetectLinuxRole
 	InfoOSLinux
 	InfoIpsLinux
@@ -1700,6 +1852,17 @@ Linux*)
 	# CPUProcessLinux
 	# RAMProcessLinux
 	# DSTLinux
+	OperationalPage
+	# Remote access
+	# Network infrastructure
+	# Server infrastructure
+	# Logging
+	# Monitoring
+	# SSL Certificates
+	# Backup
+	# Licenses
+	SecurityPage
+	ConfigurationPage
 	ConfigFiles
 	GroupFile
 	UserFile
