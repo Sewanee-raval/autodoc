@@ -43,7 +43,7 @@
 #	TODO: Add Overview and Service Description under About
 #	TODO: Add Users and Contact List under Functional
 #	TODO: Add System Security, Remote Access, Server Infrastructure, Logging, SSL Certs, Backup, Licenses under Operational
-
+#	TODO: Add clamav, rkhunter, chkrootkit, and other security tools
 #
 #----------------------------------------------------------------------
 
@@ -59,6 +59,18 @@ fi
 prog_name=$(basename "${0}")
 timestamp=$(date +"%Y-%m-%d %H:%M:%S")
 datestamp=$(date +"%Y-%m-%d")
+
+# Set Global Variables for php
+SELinuxDB=""
+OpenSCAPDB=""
+AIDEDB=""
+LogwatchDB=""
+Fail2banDB=""
+FirewalldDB=""
+FapolicydDB=""
+ClamAVDB=""
+FIPSSettingDB=""
+SSSDDB=""
 
 input=$1
 PATH=$PATH:$HOME/bin:/sbin:/bin:/usr/sbin:/usr/bin
@@ -568,6 +580,25 @@ FapolicdLinuxStatus() {
 	# 	echo "<span class='adauthicon'>AD Authentication is Configured</span>"
 	# fi
 
+}
+
+ClamAVLinuxStatus() {
+	echo "<h3 id='clamavfiles' style='text-decoration:underline;'>ClamAV Status</h3>"
+	if hash clamav 2>/dev/null; then
+		clamav --version >/dev/null 2>&1
+		clamavstatus=$?
+	else
+		clamavstatus=1
+	fi
+
+	if (($clamavstatus > 0)); then
+		echo "<span class='clamavicon'>ClamAV is not installed or not enabled</span>"
+	else
+		clamavversion=$(clamav --version | grep "ClamAV" | awk '{print $2}')
+		echo "<span class='clamavicon'>ClamAV is installed and enabled</span>"
+		echo "<span class='clamavicon'>ClamAV version is: $clamavversion </span>"
+	fi
+	echo '<hr style="height:2px;border-width:0;color:gray;background-color:gray;width:25%;text-align:left;margin-left:0">'
 }
 
 SecurityConfigLinux() {
@@ -1828,7 +1859,7 @@ SecurityPage() {
 	# Fapolicyd
 	# ClamAV
 	# FIPS Setting
-	#
+	# SSSD
 }
 
 unamestr=$(uname)
