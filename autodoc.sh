@@ -47,20 +47,40 @@
 #
 #----------------------------------------------------------------------
 
-# Set Name and Version
-declare -r SCRIPT_NAME=""
-declare -r VERSION="0.18.0"
+#----------------------------------------
+# Script metadata and versioning
+#----------------------------------------
+readonly SCRIPT_NAME="$(basename "$0")"
+readonly SCRIPT_VERSION="1.18.0"
 
+# Exit on error, undefined vars, pipe failures
+set -o errexit      # Exit immediately if a command exits with a non-zero status
+set -o nounset      # Treat unset variables as an error
+set -o pipefail     # Detect errors in pipelines
+
+# Check if the script is run as root
 if [ "$(id -u)" -ne 0 ]; then
 	echo 'This script must be run by root or sudo' >&2
 	exit 1
 fi
+
 # Set Working Variables
 prog_name=$(basename "${0}")
 timestamp=$(date +"%Y-%m-%d %H:%M:%S")
 datestamp=$(date +"%Y-%m-%d")
 
-# Set Global Variables for php
+# Database Configuration - modify these variables as needed
+DB_HOST="${DB_HOST:-localhost}"
+DB_PORT="${DB_PORT:-3306}"
+DB_NAME="${DB_NAME:-linuxsystems}"
+DB_USER="${DB_USER:-}"
+DB_PASS="${DB_PASS:-}"
+TABLE_NAME="statuses"
+
+# Status variables - set these with your actual values
+ip_address="${1:-}"
+aide="${2:-}"
+fapolicyd="${3:-}"
 SELinuxDB=""
 OpenSCAPDB=""
 AIDEDB=""
@@ -1861,6 +1881,125 @@ SecurityPage() {
 	# FIPS Setting
 	# SSSD
 }
+
+## Database Functions ##
+# Function to log messages
+log() {
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" >&2
+}
+
+# Function to validate input
+validate_input() {
+    if [[ -z "$ip_address" ]] || [[ -z "$aide" ]] || [[ -z "$fapolicyd" ]]; then
+        log "ERROR: Missing required parameters"
+        usage
+    fi
+    
+    if [[ -z "$DB_USER" ]] || [[ -z "$DB_PASS" ]]; then
+        log "ERROR: Database credentials not provided"
+        echo "Set DB_USER and DB_PASS environment variables" >&2
+        exit 1
+    fi
+    
+    # Basic IP address validation
+    if ! [[ "$ip_address" =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]]; then
+        log "WARNING: IP address format may be invalid: $ip_address"
+    fi
+}
+
+# Function to test database connection
+test_connection() {
+    log "Testing database connection..."
+    
+    if ! mysql --host="$DB_HOST" --port="$DB_PORT" --user="$DB_USER" --password="$DB_PASS" \
+              --database="$DB_NAME" --execute="SELECT 1;" >/dev/null 2>&1; then
+        log "ERROR: Unable to connect to database"
+        exit 1
+    fi
+    
+    log "Database connection successful"
+}
+
+# Function to create table if it doesn't exist
+ensure_table_exists() {
+    log "Ensuring table exists..."
+    
+    local create_table_sql="
+
+
+    CREATE TABLE IF NOT EXISTS $TABLE_NAME (
+        ip_address VARCHAR(45) PRIMARY KEY,
+		hostname VARCHAR(255) NOT NULL,
+		fapolicyd tinyint(1) NOT NULL DEFAULT 0,
+		selinux tinyint(1) NOT NULL DEFAULT 0,
+		openscap tinyint(1) NOT NULL DEFAULT 0,
+		aide tinyint(1) NOT NULL DEFAULT 0,
+		logwatch tinyint(1) NOT NULL DEFAULT 0,
+		fips tinyint(1) NOT NULL DEFAULT 0,
+		fail2ban tinyint(1) NOT NULL DEFAULT 0,
+		sssd tinyint(1) NOT NULL DEFAULT 0,
+		clamav tinyint(1) NOT NULL DEFAULT 0,
+        last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE current_timestamp()
+		PRIMARY KEY (ip_address),
+  		UNIQUE KEY ip_address_UNIQUE (ip_address)
+    );"
+    
+    if ! mysql --host="$DB_HOST" --port="$DB_PORT" --user="$DB_USER" --password="$DB_PASS" \
+              --database="$DB_NAME" --execute="$create_table_sql" 2>/dev/null; then
+        log "ERROR: Failed to create/verify table"
+        exit 1
+    fi
+    
+    log "Table verified/created successfully"
+}
+
+# Function to update status in database
+update_status() {
+    log "Updating status for IP: $ip_address"
+    
+    # Use INSERT ... ON DUPLICATE KEY UPDATE for upsert functionality
+    local upsert_sql="
+    INSERT INTO $TABLE_NAME (ip_address, aide, fapolicyd)
+    VALUES (?, ?, ?)
+    ON DUPLICATE KEY UPDATE
+        aide = VALUES(aide),
+        fapolicyd = VALUES(fapolicyd),
+        last_updated = CURRENT_TIMESTAMP;"
+    
+    # Create a temporary SQL file with the prepared statement
+    local temp_sql=$(mktemp)
+    trap "rm -f $temp_sql" EXIT
+    
+    cat > "$temp_sql" << EOF
+SET @ip = '$ip_address';
+SET @aide = '$aide';
+SET @fapolicyd = '$fapolicyd';
+
+INSERT INTO $TABLE_NAME (ip_address, aide, fapolicyd)
+VALUES (@ip, @aide, @fapolicyd)
+ON DUPLICATE KEY UPDATE
+    aide = VALUES(aide),
+    fapolicyd = VALUES(fapolicyd),
+    last_updated = CURRENT_TIMESTAMP;
+EOF
+    
+    if mysql --host="$DB_HOST" --port="$DB_PORT" --user="$DB_USER" --password="$DB_PASS" \
+            --database="$DB_NAME" < "$temp_sql" 2>/dev/null; then
+        log "Status updated successfully"
+        
+        # Verify the update
+        local verify_sql="SELECT ip_address, aide, fapolicyd, last_updated 
+                         FROM $TABLE_NAME WHERE ip_address = '$ip_address';"
+        
+        log "Current record:"
+        mysql --host="$DB_HOST" --port="$DB_PORT" --user="$DB_USER" --password="$DB_PASS" \
+              --database="$DB_NAME" --table --execute="$verify_sql" 2>/dev/null
+    else
+        log "ERROR: Failed to update status"
+        exit 1
+    fi
+}
+
 
 unamestr=$(uname)
 
